@@ -5,10 +5,10 @@ import {
   BriefcaseBusiness,
   Code2,
   Database,
-  ExternalLink,
   GraduationCap,
   LineChart,
   Mail,
+  Phone,
   PlayCircle,
   X,
 } from "lucide-react";
@@ -69,7 +69,7 @@ const supportingExperience = [
     company: "Simon Fraser University",
     period: "May - Aug 2025",
     summary:
-      "Led weekly tutorials for 80+ students on managerial accounting, financial statements, financial analysis, and business problem-solving.",
+      "Led weekly tutorials for 80+ students on managerial accounting, financial statements and business problem-solving.",
     details: [
       "Developed class materials and managed grading workflows using Microsoft Excel.",
       "Translated technical business concepts into practical examples for students.",
@@ -104,13 +104,7 @@ const projects = [
       "Created an interactive interface to help explore location and demographic insights visually.",
     ],
     tags: ["Python", "scikit-learn", "pandas", "NumPy", "APIs"],
-    links: [
-      {
-        href: "https://interface-bice-kappa.vercel.app",
-        label: "Open project",
-        icon: ExternalLink,
-      },
-    ],
+    links: [],
     screenshots: [
       {
         src: "/portfolio/restaurant-hero.png",
@@ -200,16 +194,18 @@ const skillGroups = [
 
 function EntryPoints({ summary, points }) {
   return (
-    <ul className="entry-points">
-      <li>{summary}</li>
-      {points.map((point) => (
-        <li key={point}>{point}</li>
-      ))}
-    </ul>
+    <div className="entry-points">
+      <p>{summary}</p>
+      <ul>
+        {points.map((point) => (
+          <li key={point}>{point}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-function ScreenshotGallery({ screenshots, onSelect }) {
+function ScreenshotGallery({ screenshots, expandedSrc, onToggle }) {
   if (!screenshots?.length) {
     return null;
   }
@@ -217,9 +213,22 @@ function ScreenshotGallery({ screenshots, onSelect }) {
   return (
     <div className="screenshot-gallery">
       {screenshots.map((screenshot) => (
-        <figure className="screenshot-frame" key={screenshot.src}>
-          <button type="button" onClick={() => onSelect(screenshot)} aria-label={`Open larger view: ${screenshot.alt}`}>
+        <figure
+          className={`screenshot-frame${expandedSrc === screenshot.src ? " is-expanded" : ""}`}
+          key={screenshot.src}
+        >
+          <button
+            type="button"
+            onClick={() => onToggle(screenshot.src)}
+            aria-label={`${expandedSrc === screenshot.src ? "Close" : "Enlarge"} preview: ${screenshot.alt}`}
+            aria-expanded={expandedSrc === screenshot.src}
+          >
             <img src={screenshot.src} alt={screenshot.alt} />
+            {expandedSrc === screenshot.src && (
+              <span className="screenshot-close" aria-hidden="true">
+                <X size={18} />
+              </span>
+            )}
           </button>
         </figure>
       ))}
@@ -237,41 +246,94 @@ function LinkButton({ link }) {
   );
 }
 
-function ImageLightbox({ image, onClose }) {
-  useEffect(() => {
-    if (!image) {
-      return undefined;
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [image, onClose]);
-
-  if (!image) {
-    return null;
-  }
-
+function SectionHeading({ children }) {
   return (
-    <div className="lightbox" role="dialog" aria-modal="true" aria-label="Project screenshot">
-      <button className="lightbox-backdrop" type="button" aria-label="Close image preview" onClick={onClose} />
-      <div className="lightbox-panel">
-        <button className="lightbox-close" type="button" aria-label="Close image preview" onClick={onClose}>
-          <X size={20} />
-        </button>
-        <img src={image.src} alt={image.alt} />
-      </div>
+    <div className="section-heading">
+      <h2>{children}</h2>
     </div>
   );
 }
 
 function App() {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [expandedImageSrc, setExpandedImageSrc] = useState(null);
+
+  useEffect(() => {
+    function handleAnchorClick(event) {
+      const anchor = event.target.closest('a[href^="#"]');
+
+      if (!anchor || event.defaultPrevented) {
+        return;
+      }
+
+      const targetId = anchor.getAttribute("href");
+      const target = targetId && document.querySelector(targetId);
+
+      if (!target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const headerOffset = 90;
+      const startY = window.scrollY;
+      const targetY = target.getBoundingClientRect().top + startY - headerOffset;
+      const distance = targetY - startY;
+      const duration = 1050;
+      const startTime = performance.now();
+
+      function easeInOutQuad(progress) {
+        return progress < 0.5 ? 2 * progress ** 2 : 1 - (-2 * progress + 2) ** 2 / 2;
+      }
+
+      function step(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        window.scrollTo(0, startY + distance * easeInOutQuad(progress));
+
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          window.history.pushState(null, "", targetId);
+        }
+      }
+
+      window.requestAnimationFrame(step);
+    }
+
+    document.addEventListener("click", handleAnchorClick);
+    return () => document.removeEventListener("click", handleAnchorClick);
+  }, []);
+
+  useEffect(() => {
+    if (!expandedImageSrc) {
+      return undefined;
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setExpandedImageSrc(null);
+      }
+    }
+
+    function handlePointerDown(event) {
+      if (!event.target.closest(".screenshot-frame")) {
+        setExpandedImageSrc(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [expandedImageSrc]);
+
+  function toggleScreenshot(src) {
+    setExpandedImageSrc((currentSrc) => (currentSrc === src ? null : src));
+  }
 
   return (
     <>
@@ -279,25 +341,36 @@ function App() {
       <main>
         <section id="home" className="hero-section section-shell">
           <div className="hero-copy">
-            <p className="eyebrow">Portfolio</p>
-            <h1>Shelby Haines</h1>
+            <h1 className="hero-title">
+              <span>Portfolio</span>
+              <span aria-hidden="true">|</span>
+              <span>Shelby Haines</span>
+            </h1>
             <p className="hero-lede">
-              Computing Science and Business Administration student at Simon Fraser University, building software and
-              data tools for practical business problems.
+              I am a Computing Science and Business Administration student at Simon Fraser University with experience
+              in software development, data analysis, and business problem-solving. I am interested in opportunities
+              that apply software development to new business problems.
             </p>
             <div className="hero-actions">
-              <a className="primary-action" href="#projects">
-                View projects <ArrowUpRight size={18} />
+              <a className="secondary-action" href="#experience">
+                View work experience
+              </a>
+              <a className="secondary-action" href="#projects">
+                View projects
+              </a>
+              <a className="secondary-action" href="#education">
+                View education
+              </a>
+              <a className="secondary-action" href="#skills">
+                View skills
               </a>
             </div>
           </div>
         </section>
 
         <section id="experience" className="section-shell content-section">
-          <div className="section-heading">
-            <p className="eyebrow">Experience</p>
-            <h2>Technical work experience</h2>
-          </div>
+          <SectionHeading>Experience</SectionHeading>
+          <h3 className="section-subheading">Technical work experience</h3>
 
           <div className="entry-stack">
             {technicalExperience.map((item) => (
@@ -315,14 +388,17 @@ function App() {
                     <span key={tag}>{tag}</span>
                   ))}
                 </div>
-                <ScreenshotGallery screenshots={item.screenshots} onSelect={setSelectedImage} />
+                <ScreenshotGallery
+                  screenshots={item.screenshots}
+                  expandedSrc={expandedImageSrc}
+                  onToggle={toggleScreenshot}
+                />
               </article>
             ))}
           </div>
 
           <div className="supporting-experience">
             <div className="subsection-heading">
-              <p className="eyebrow">Additional Experience</p>
               <h3>Business, teaching, and client-facing experience</h3>
             </div>
             <div className="supporting-grid">
@@ -344,10 +420,7 @@ function App() {
         </section>
 
         <section id="projects" className="section-shell content-section">
-          <div className="section-heading">
-            <p className="eyebrow">Projects</p>
-            <h2>Technical projects</h2>
-          </div>
+          <SectionHeading>Projects</SectionHeading>
 
           <div className="entry-stack">
             {projects.map((project) => {
@@ -370,12 +443,18 @@ function App() {
                       <span key={tag}>{tag}</span>
                     ))}
                   </div>
-                  <div className="project-links">
-                    {project.links.map((link) => (
-                      <LinkButton link={link} key={link.href} />
-                    ))}
-                  </div>
-                  <ScreenshotGallery screenshots={project.screenshots} onSelect={setSelectedImage} />
+                  {project.links.length > 0 && (
+                    <div className="project-links">
+                      {project.links.map((link) => (
+                        <LinkButton link={link} key={link.href} />
+                      ))}
+                    </div>
+                  )}
+                  <ScreenshotGallery
+                    screenshots={project.screenshots}
+                    expandedSrc={expandedImageSrc}
+                    onToggle={toggleScreenshot}
+                  />
                 </article>
               );
             })}
@@ -383,10 +462,7 @@ function App() {
         </section>
 
         <section id="education" className="section-shell content-section">
-          <div className="section-heading compact-heading">
-            <p className="eyebrow">Education</p>
-            <h2>Education</h2>
-          </div>
+          <SectionHeading>Education</SectionHeading>
 
           <article className="education-card">
             <div className="education-icon">
@@ -406,10 +482,7 @@ function App() {
         </section>
 
         <section id="skills" className="section-shell content-section">
-          <div className="section-heading compact-heading">
-            <p className="eyebrow">Skills</p>
-            <h2>Skills</h2>
-          </div>
+          <SectionHeading>Skills</SectionHeading>
 
           <div className="skills-grid">
             {skillGroups.map((group) => {
@@ -432,12 +505,18 @@ function App() {
         <section id="contact" className="contact-section">
           <div className="section-shell contact-inner">
             <div>
-              <p className="eyebrow">Contact</p>
-              <p>I am open to internships and new graduate roles.</p>
+              <h2>Contact</h2>
+              <div className="contact-details">
+                <a href="mailto:srh11@sfu.ca">srh11@sfu.ca</a>
+                <a href="tel:+16044428307">604 442 8307</a>
+              </div>
             </div>
             <div className="contact-actions" aria-label="Contact links">
               <a href="mailto:srh11@sfu.ca">
                 Email <Mail size={18} />
+              </a>
+              <a href="tel:+16044428307">
+                Phone <Phone size={18} />
               </a>
               <a href="https://www.linkedin.com/in/shelbyhaines" target="_blank" rel="noreferrer">
                 LinkedIn <ArrowUpRight size={18} />
@@ -447,7 +526,6 @@ function App() {
         </section>
       </main>
       <Footer />
-      <ImageLightbox image={selectedImage} onClose={() => setSelectedImage(null)} />
     </>
   );
 }

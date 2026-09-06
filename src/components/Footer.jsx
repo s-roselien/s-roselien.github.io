@@ -3,8 +3,10 @@ function Footer() {
     <footer className="site-footer">
       <div className="section-shell footer-inner">
         <span>Shelby Haines</span>
+        <span aria-hidden="true">|</span>
         <span>Vancouver, BC</span>
-        <a href="mailto:srh11@sfu.ca">srh11@sfu.ca</a>
+        <span aria-hidden="true">|</span>
+        <span>Simon Fraser University</span>
       </div>
     </footer>
   );
