@@ -1,13 +1,35 @@
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import NavBar from "./NavBar";
 
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
-    <header style={{ backgroundColor: '#6366f1' }} className="text-white shadow-sm">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center">
-        <h1 className="text-2xl font-semibold">
-          Personal Portfolio  |  Shelby Haines
-        </h1>
-        <NavBar />
+    <header className="site-header">
+      <div className="nav-shell">
+        <a className="brand-mark" href="#home" onClick={closeMenu} aria-label="Shelby Haines home">
+          <span>SH</span>
+          <strong>Shelby Haines</strong>
+        </a>
+
+        <NavBar isOpen={menuOpen} onNavigate={closeMenu} />
+
+        <div className="header-actions">
+          <button
+            className="icon-button menu-button"
+            type="button"
+            onClick={() => setMenuOpen((isOpen) => !isOpen)}
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <X size={21} /> : <Menu size={21} />}
+          </button>
+        </div>
       </div>
     </header>
   );

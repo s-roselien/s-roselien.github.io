@@ -1,28 +1,20 @@
-import { NavLink } from "react-router-dom";
+const navItems = [
+  { href: "#home", label: "Home" },
+  { href: "#experience", label: "Experience" },
+  { href: "#projects", label: "Projects" },
+  { href: "#education", label: "Education" },
+  { href: "#skills", label: "Skills" },
+  { href: "#contact", label: "Contact" },
+];
 
-function linkClasses({ isActive }) {
-  if (isActive) {
-    return "text-lg font-semibold px-4 py-1 rounded-md transition-colors duration-200 bg-[#8B008B] text-white";
-  } else {
-    return "text-lg font-semibold px-4 py-1 rounded-md transition-colors duration-200 bg-white text-[#4f46e5] hover:bg-[#f0dbff]";
-  }
-}
-
-function NavBar() {
-    return (
-    <nav className="ml-auto flex gap-4">
-        <NavLink to="/" className={linkClasses}>
-            Home
-        </NavLink>
-        <NavLink to="/skills" className={linkClasses}>
-            Skills
-        </NavLink>
-        <NavLink to="/interests" className={linkClasses}>
-            Interests
-        </NavLink>
-        <NavLink to="/contact" className={linkClasses}>
-            Contact
-        </NavLink>
+function NavBar({ isOpen, onNavigate }) {
+  return (
+    <nav className={`site-nav ${isOpen ? "is-open" : ""}`} aria-label="Primary navigation">
+      {navItems.map((item) => (
+        <a key={item.href} href={item.href} onClick={onNavigate}>
+          {item.label}
+        </a>
+      ))}
     </nav>
   );
 }
