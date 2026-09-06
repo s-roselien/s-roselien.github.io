@@ -522,7 +522,7 @@ button {
   transform: translateY(-2px);
 }
 
-.screenshot-frame:nth-child(4n).is-expanded button {
+.screenshot-frame.is-align-right.is-expanded button {
   right: 0;
   left: auto;
 }
@@ -751,7 +751,7 @@ button {
     grid-column: 1 / -1;
   }
 
-  .screenshot-frame:nth-child(even).is-expanded button {
+  .screenshot-frame.is-align-right.is-expanded button {
     right: 0;
     left: auto;
   }
@@ -805,8 +805,7 @@ button {
   }
 
   .screenshot-frame.is-expanded button,
-  .screenshot-frame:nth-child(even).is-expanded button,
-  .screenshot-frame:nth-child(4n).is-expanded button {
+  .screenshot-frame.is-align-right.is-expanded button {
     right: auto;
     left: 0;
     width: 100%;

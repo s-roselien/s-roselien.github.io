@@ -205,33 +205,38 @@ function EntryPoints({ summary, points }) {
   );
 }
 
-function ScreenshotGallery({ screenshots, expandedSrc, onToggle }) {
+function ScreenshotGallery({ screenshots, expandedImage, onToggle }) {
   if (!screenshots?.length) {
     return null;
   }
 
   return (
     <div className="screenshot-gallery">
-      {screenshots.map((screenshot) => (
-        <figure
-          className={`screenshot-frame${expandedSrc === screenshot.src ? " is-expanded" : ""}`}
-          key={screenshot.src}
-        >
-          <button
-            type="button"
-            onClick={() => onToggle(screenshot.src)}
-            aria-label={`${expandedSrc === screenshot.src ? "Close" : "Enlarge"} preview: ${screenshot.alt}`}
-            aria-expanded={expandedSrc === screenshot.src}
+      {screenshots.map((screenshot) => {
+        const isExpanded = expandedImage?.src === screenshot.src;
+        const alignmentClass = isExpanded && expandedImage.align === "right" ? " is-align-right" : "";
+
+        return (
+          <figure
+            className={`screenshot-frame${isExpanded ? " is-expanded" : ""}${alignmentClass}`}
+            key={screenshot.src}
           >
-            <img src={screenshot.src} alt={screenshot.alt} />
-            {expandedSrc === screenshot.src && (
-              <span className="screenshot-close" aria-hidden="true">
-                <X size={18} />
-              </span>
-            )}
-          </button>
-        </figure>
-      ))}
+            <button
+              type="button"
+              onClick={(event) => onToggle(screenshot.src, event.currentTarget)}
+              aria-label={`${isExpanded ? "Close" : "Enlarge"} preview: ${screenshot.alt}`}
+              aria-expanded={isExpanded}
+            >
+              <img src={screenshot.src} alt={screenshot.alt} />
+              {isExpanded && (
+                <span className="screenshot-close" aria-hidden="true">
+                  <X size={18} />
+                </span>
+              )}
+            </button>
+          </figure>
+        );
+      })}
     </div>
   );
 }
@@ -255,7 +260,7 @@ function SectionHeading({ children }) {
 }
 
 function App() {
-  const [expandedImageSrc, setExpandedImageSrc] = useState(null);
+  const [expandedImage, setExpandedImage] = useState(null);
 
   useEffect(() => {
     function handleAnchorClick(event) {
@@ -306,19 +311,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!expandedImageSrc) {
+    if (!expandedImage) {
       return undefined;
     }
 
     function handleKeyDown(event) {
       if (event.key === "Escape") {
-        setExpandedImageSrc(null);
+        setExpandedImage(null);
       }
     }
 
     function handlePointerDown(event) {
       if (!event.target.closest(".screenshot-frame")) {
-        setExpandedImageSrc(null);
+        setExpandedImage(null);
       }
     }
 
@@ -329,10 +334,19 @@ function App() {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [expandedImageSrc]);
+  }, [expandedImage]);
 
-  function toggleScreenshot(src) {
-    setExpandedImageSrc((currentSrc) => (currentSrc === src ? null : src));
+  function toggleScreenshot(src, button) {
+    setExpandedImage((currentImage) => {
+      if (currentImage?.src === src) {
+        return null;
+      }
+
+      const rect = button.getBoundingClientRect();
+      const align = rect.left + rect.width / 2 > window.innerWidth / 2 ? "right" : "left";
+
+      return { src, align };
+    });
   }
 
   return (
@@ -390,7 +404,7 @@ function App() {
                 </div>
                 <ScreenshotGallery
                   screenshots={item.screenshots}
-                  expandedSrc={expandedImageSrc}
+                  expandedImage={expandedImage}
                   onToggle={toggleScreenshot}
                 />
               </article>
@@ -399,7 +413,7 @@ function App() {
 
           <div className="supporting-experience">
             <div className="subsection-heading">
-              <h3>Business, teaching, and client-facing experience</h3>
+              <h3>Business and teaching experience</h3>
             </div>
             <div className="supporting-grid">
               {supportingExperience.map((item) => (
@@ -452,7 +466,7 @@ function App() {
                   )}
                   <ScreenshotGallery
                     screenshots={project.screenshots}
-                    expandedSrc={expandedImageSrc}
+                    expandedImage={expandedImage}
                     onToggle={toggleScreenshot}
                   />
                 </article>
@@ -508,7 +522,7 @@ function App() {
               <h2>Contact</h2>
               <div className="contact-details">
                 <a href="mailto:srh11@sfu.ca">srh11@sfu.ca</a>
-                <a href="tel:+16044428307">604 442 8307</a>
+                <a href="tel:+16044428307">604-442-8307</a>
               </div>
             </div>
             <div className="contact-actions" aria-label="Contact links">
